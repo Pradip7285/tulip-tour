@@ -1015,4 +1015,4 @@ class ProviderController {
         $stmt->execute([$slug]);
         return $stmt->fetchColumn() > 0;
     }
-} 
+}

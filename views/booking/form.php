@@ -177,11 +177,9 @@ $user = getCurrentUser();
                 <div class="booking-form p-8">
                     <h2 class="text-3xl font-bold text-gray-900 mb-8">Complete Your Booking</h2>
                     
-                    <?php if (hasFlashMessage()): ?>
-                        <div class="mb-6">
-                            <?php displayFlashMessage(); ?>
-                        </div>
-                    <?php endif; ?>
+                    <div class="mb-6">
+                        <?php displayFlashMessage(); ?>
+                    </div>
                     
                     <form action="<?= app_url('/booking') ?>" method="POST" id="bookingForm">
                         <input type="hidden" name="package_id" value="<?= $package['id'] ?>">

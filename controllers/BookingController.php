@@ -1,12 +1,10 @@
 <?php
-require_once 'includes/database.php';
-require_once 'includes/helpers.php';
 
 class BookingController {
     private $db;
     
     public function __construct() {
-        $this->db = Database::getInstance()->getConnection();
+        $this->db = getDB();
     }
     
     public function showForm() {
@@ -38,6 +36,12 @@ class BookingController {
             redirect('/packages');
             return;
         }
+        
+        // Get current user for the form
+        $user = getCurrentUser();
+        
+        // Get current user for the form
+        $user = getCurrentUser();
         
         $pageTitle = 'Book Package - ' . $package['title'];
         $pageDescription = 'Complete your booking for ' . $package['title'];
@@ -201,6 +205,107 @@ class BookingController {
         include 'views/booking/confirmation.php';
         $content = ob_get_clean();
         include 'includes/layout.php';
+    }
+    
+    public function payment() {
+        $bookingId = $_GET['booking_id'] ?? null;
+        
+        if (!$bookingId) {
+            set_flash_message('error', 'Booking not found.');
+            redirect('/customer/bookings');
+            return;
+        }
+        
+        // Handle payment processing
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            return $this->processPayment();
+        }
+        
+        // Get booking details
+        $user = getCurrentUser();
+        $stmt = $this->db->prepare("
+            SELECT b.*, p.title as package_title, p.destination, p.duration_days,
+                   p.featured_image, u.first_name as provider_first_name, 
+                   u.last_name as provider_last_name, pp.company_name
+            FROM bookings b
+            JOIN packages p ON b.package_id = p.id
+            JOIN users u ON p.provider_id = u.id
+            LEFT JOIN provider_profiles pp ON u.id = pp.user_id
+            WHERE b.booking_id = ? AND b.customer_id = ?
+        ");
+        $stmt->execute([$bookingId, $user['id']]);
+        $booking = $stmt->fetch();
+        
+        if (!$booking) {
+            set_flash_message('error', 'Booking not found.');
+            redirect('/customer/bookings');
+            return;
+        }
+        
+        // Check if booking is in a state that allows payment
+        if ($booking['payment_status'] === 'completed') {
+            set_flash_message('info', 'This booking has already been paid.');
+            redirect('/booking/confirmation?booking_id=' . $bookingId);
+            return;
+        }
+        
+        $pageTitle = 'Payment - ' . $booking['package_title'];
+        $pageDescription = 'Complete payment for your booking.';
+        
+        ob_start();
+        include 'views/booking/payment.php';
+        $content = ob_get_clean();
+        include 'includes/layout.php';
+    }
+    
+    private function processPayment() {
+        try {
+            $bookingId = $_POST['booking_id'] ?? null;
+            $paymentMethod = $_POST['payment_method'] ?? null;
+            
+            if (!$bookingId || !$paymentMethod) {
+                set_flash_message('error', 'Invalid payment data.');
+                redirect('/booking/payment?booking_id=' . urlencode($bookingId));
+                return;
+            }
+            
+            $user = getCurrentUser();
+            
+            // Get booking details
+            $stmt = $this->db->prepare("
+                SELECT * FROM bookings 
+                WHERE booking_id = ? AND customer_id = ? AND payment_status != 'completed'
+            ");
+            $stmt->execute([$bookingId, $user['id']]);
+            $booking = $stmt->fetch();
+            
+            if (!$booking) {
+                set_flash_message('error', 'Booking not found or already paid.');
+                redirect('/customer/bookings');
+                return;
+            }
+            
+            // In a real implementation, you would integrate with actual payment gateways here
+            // For demo purposes, we'll simulate successful payment
+            
+            // Update booking payment status
+            $stmt = $this->db->prepare("
+                UPDATE bookings 
+                SET payment_status = 'completed', 
+                    payment_method = ?,
+                    paid_at = NOW()
+                WHERE booking_id = ?
+            ");
+            $stmt->execute([$paymentMethod, $bookingId]);
+            
+            set_flash_message('success', 'Payment completed successfully!');
+            redirect('/booking/confirmation?booking_id=' . urlencode($bookingId) . '&payment=success');
+            
+        } catch (Exception $e) {
+            error_log("Payment processing error: " . $e->getMessage());
+            set_flash_message('error', 'Payment processing failed. Please try again.');
+            redirect('/booking/payment?booking_id=' . urlencode($bookingId ?? ''));
+        }
     }
 }
 ?>

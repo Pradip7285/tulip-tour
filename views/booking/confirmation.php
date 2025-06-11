@@ -135,6 +135,17 @@
                 <div class="mt-4 text-sm opacity-75">
                     Booking ID: <span class="font-mono font-bold"><?= $booking['booking_id'] ?></span>
                 </div>
+                
+                <!-- Prominent Pay Now Button -->
+                <?php if ($booking['payment_status'] !== 'completed'): ?>
+                <div class="mt-6">
+                    <a href="<?= app_url('/booking/payment?booking_id=' . urlencode($booking['booking_id'])) ?>" 
+                       class="inline-block bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 border-2 border-white border-opacity-30 hover:border-opacity-50">
+                        <i class="fas fa-credit-card mr-2"></i>
+                        Complete Payment Now
+                    </a>
+                </div>
+                <?php endif; ?>
             </div>
             
             <div class="p-8">
@@ -224,6 +235,31 @@
                             </div>
                         </div>
                         
+                        <!-- Pay Now Button -->
+                        <?php if ($booking['payment_status'] !== 'completed'): ?>
+                        <div class="mt-6 p-4 bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-lg">
+                            <div class="text-center">
+                                <h4 class="font-semibold text-green-900 mb-2">Complete Your Payment</h4>
+                                <p class="text-sm text-green-700 mb-4">Secure your booking now with our safe payment system</p>
+                                <a href="<?= app_url('/booking/payment?booking_id=' . urlencode($booking['booking_id'])) ?>" 
+                                   class="inline-block bg-gradient-to-r from-green-500 to-green-600 text-white font-bold py-3 px-8 rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                                    <i class="fas fa-credit-card mr-2"></i>
+                                    Pay Now - <?= formatPrice($booking['total_amount']) ?>
+                                </a>
+                            </div>
+                        </div>
+                        <?php else: ?>
+                        <div class="mt-6 p-4 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg">
+                            <div class="text-center">
+                                <h4 class="font-semibold text-blue-900 mb-2">
+                                    <i class="fas fa-check-circle mr-2"></i>
+                                    Payment Completed
+                                </h4>
+                                <p class="text-sm text-blue-700">Your booking payment has been successfully processed</p>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+                        
                         <?php if ($booking['special_requirements']): ?>
                         <div class="mt-4">
                             <h4 class="font-semibold text-gray-900 mb-2">Special Requirements:</h4>
@@ -268,7 +304,13 @@
             </div>
             
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="<?= app_url('/customer/bookings') ?>" class="btn-primary text-center">
+                <?php if ($booking['payment_status'] !== 'completed'): ?>
+                <a href="<?= app_url('/booking/payment?booking_id=' . $booking['booking_id']) ?>" class="btn-primary text-center" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);">
+                    <i class="fas fa-credit-card mr-2"></i>
+                    Proceed to Payment
+                </a>
+                <?php endif; ?>
+                <a href="<?= app_url('/customer/bookings') ?>" class="btn-outline-primary text-center">
                     <i class="fas fa-list mr-2"></i>
                     View All Bookings
                 </a>
