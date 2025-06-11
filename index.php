@@ -258,6 +258,18 @@ switch ($path) {
             require_once 'controllers/ProviderController.php';
             $controller = new ProviderController();
             $controller->deletePackage($matches[1]);
+        } elseif (preg_match('/^\/provider\/packages\/toggle-status\/(\d+)$/', $path, $matches)) {
+            requireLogin();
+            requireRole('provider');
+            require_once 'controllers/ProviderController.php';
+            $controller = new ProviderController();
+            $controller->togglePackageStatus($matches[1]);
+        } elseif (preg_match('/^\/provider\/packages\/duplicate\/(\d+)$/', $path, $matches)) {
+            requireLogin();
+            requireRole('provider');
+            require_once 'controllers/ProviderController.php';
+            $controller = new ProviderController();
+            $controller->duplicatePackage($matches[1]);
         } elseif (preg_match('/^\/provider\/bookings\/update-status\/(\d+)$/', $path, $matches)) {
             requireLogin();
             requireRole('provider');

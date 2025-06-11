@@ -110,10 +110,25 @@ $pageDescription = 'Manage all your travel packages';
                             <?= $package['is_active'] ? 'Active' : 'Inactive' ?>
                         </span>
                         <div class="flex space-x-1">
-                            <a href="<?= app_url('/provider/packages/edit/' . $package['id']) ?>" class="text-blue-600 hover:text-blue-800">
+                            <a href="<?= app_url('/provider/packages/edit/' . $package['id']) ?>" 
+                               class="text-blue-600 hover:text-blue-800 p-1 rounded" title="Edit Package">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            <button onclick="deletePackage(<?= $package['id'] ?>)" class="text-red-600 hover:text-red-800">
+                            <a href="<?= app_url('/package/' . $package['slug']) ?>" 
+                               class="text-green-600 hover:text-green-800 p-1 rounded" title="View Package" target="_blank">
+                                <i class="fas fa-external-link-alt"></i>
+                            </a>
+                            <button onclick="togglePackageStatus(<?= $package['id'] ?>, <?= $package['is_active'] ? 'false' : 'true' ?>)" 
+                                    class="<?= $package['is_active'] ? 'text-orange-600 hover:text-orange-800' : 'text-green-600 hover:text-green-800' ?> p-1 rounded" 
+                                    title="<?= $package['is_active'] ? 'Deactivate' : 'Activate' ?> Package">
+                                <i class="fas fa-<?= $package['is_active'] ? 'pause' : 'play' ?>"></i>
+                            </button>
+                            <button onclick="duplicatePackage(<?= $package['id'] ?>)" 
+                                    class="text-purple-600 hover:text-purple-800 p-1 rounded" title="Duplicate Package">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                            <button onclick="deletePackage(<?= $package['id'] ?>)" 
+                                    class="text-red-600 hover:text-red-800 p-1 rounded" title="Delete Package">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -133,10 +148,6 @@ $pageDescription = 'Manage all your travel packages';
                                 <span class="text-lg font-bold text-gray-900"><?= formatPrice($package['base_price']) ?></span>
                                 <span class="text-sm text-gray-500">/person</span>
                             </div>
-                            <a href="<?= app_url('/package/' . $package['slug']) ?>" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm">
-                                <i class="fas fa-external-link-alt mr-1"></i>
-                                View
-                            </a>
                         </div>
                     </div>
                 </div>

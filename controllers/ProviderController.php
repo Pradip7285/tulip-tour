@@ -424,6 +424,128 @@ class ProviderController {
         include 'includes/layout.php';
     }
     
+    public function togglePackageStatus($packageId) {
+        $providerId = $_SESSION['user_id'];
+        
+        // Verify package ownership
+        $package = $this->getPackageByIdAndProvider($packageId, $providerId);
+        if (!$package) {
+            return json_response(['success' => false, 'message' => 'Package not found']);
+        }
+        
+        $input = json_decode(file_get_contents('php://input'), true);
+        $activate = $input['activate'] ?? false;
+        
+        try {
+            $stmt = $this->db->prepare("UPDATE packages SET is_active = ?, updated_at = NOW() WHERE id = ? AND provider_id = ?");
+            $success = $stmt->execute([$activate ? 1 : 0, $packageId, $providerId]);
+            
+            if ($success) {
+                $action = $activate ? 'activated' : 'deactivated';
+                return json_response(['success' => true, 'message' => "Package $action successfully"]);
+            } else {
+                return json_response(['success' => false, 'message' => 'Failed to update package status']);
+            }
+        } catch (Exception $e) {
+            return json_response(['success' => false, 'message' => 'Database error occurred']);
+        }
+    }
+    
+    public function duplicatePackage($packageId) {
+        $providerId = $_SESSION['user_id'];
+        
+        // Verify package ownership
+        $package = $this->getPackageByIdAndProvider($packageId, $providerId);
+        if (!$package) {
+            return json_response(['success' => false, 'message' => 'Package not found']);
+        }
+        
+        try {
+            $this->db->beginTransaction();
+            
+            // Generate new title and slug
+            $newTitle = $package['title'] . ' (Copy)';
+            $newSlug = generateSlug($newTitle);
+            
+            // Make sure slug is unique
+            $counter = 1;
+            $originalSlug = $newSlug;
+            while ($this->packageSlugExists($newSlug)) {
+                $newSlug = $originalSlug . '-' . $counter;
+                $counter++;
+            }
+            
+            // Insert duplicated package
+            $stmt = $this->db->prepare("
+                INSERT INTO packages (
+                    provider_id, category_id, title, slug, description, short_description,
+                    destination, duration_days, max_guests, max_guests_per_room, child_free_age,
+                    base_price, child_price, extra_room_price,
+                    price_tier_1_max, price_tier_1_rate,
+                    price_tier_2_max, price_tier_2_rate,
+                    price_tier_3_max, price_tier_3_rate,
+                    price_tier_4_max, price_tier_4_rate,
+                    inclusions, exclusions, terms_conditions,
+                    featured_image, is_active, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+            ");
+            
+            $stmt->execute([
+                $providerId,
+                $package['category_id'],
+                $newTitle,
+                $newSlug,
+                $package['description'],
+                $package['short_description'],
+                $package['destination'],
+                $package['duration_days'],
+                $package['max_guests'],
+                $package['max_guests_per_room'] ?? 2,
+                $package['child_free_age'] ?? 7,
+                $package['base_price'],
+                $package['child_price'],
+                $package['extra_room_price'],
+                $package['price_tier_1_max'] ?? 2,
+                $package['price_tier_1_rate'] ?? 0,
+                $package['price_tier_2_max'] ?? 4,
+                $package['price_tier_2_rate'] ?? 0,
+                $package['price_tier_3_max'] ?? 6,
+                $package['price_tier_3_rate'] ?? 0,
+                $package['price_tier_4_max'] ?? 8,
+                $package['price_tier_4_rate'] ?? 0,
+                $package['inclusions'],
+                $package['exclusions'],
+                $package['terms_conditions'],
+                $package['featured_image'],
+                0 // Set as inactive initially
+            ]);
+            
+            $newPackageId = $this->db->lastInsertId();
+            
+            // Copy package images if any
+            $stmt = $this->db->prepare("SELECT * FROM package_images WHERE package_id = ?");
+            $stmt->execute([$packageId]);
+            $images = $stmt->fetchAll();
+            
+            foreach ($images as $image) {
+                $stmt = $this->db->prepare("INSERT INTO package_images (package_id, image_url, sort_order) VALUES (?, ?, ?)");
+                $stmt->execute([$newPackageId, $image['image_url'], $image['sort_order']]);
+            }
+            
+            $this->db->commit();
+            
+            return json_response([
+                'success' => true, 
+                'message' => 'Package duplicated successfully',
+                'newPackageId' => $newPackageId
+            ]);
+            
+        } catch (Exception $e) {
+            $this->db->rollback();
+            return json_response(['success' => false, 'message' => 'Failed to duplicate package']);
+        }
+    }
+    
     // Private helper methods
     private function getProviderStats($providerId) {
         $stats = [];
@@ -553,14 +675,19 @@ class ProviderController {
             // Generate slug
             $slug = generateSlug($_POST['title']);
             
-            // Insert package
+            // Insert package with tiered pricing support
             $stmt = $this->db->prepare("
                 INSERT INTO packages (
                     provider_id, category_id, title, slug, description, short_description,
-                    destination, duration_days, max_guests, base_price, child_price,
-                    extra_room_price, inclusions, exclusions, terms_conditions,
-                    featured_image, is_active
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    destination, duration_days, max_guests, max_guests_per_room, child_free_age,
+                    base_price, child_price, extra_room_price,
+                    price_tier_1_max, price_tier_1_rate,
+                    price_tier_2_max, price_tier_2_rate,
+                    price_tier_3_max, price_tier_3_rate,
+                    price_tier_4_max, price_tier_4_rate,
+                    inclusions, exclusions, terms_conditions,
+                    featured_image, is_active, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
             ");
             
             $stmt->execute([
@@ -572,10 +699,21 @@ class ProviderController {
                 $_POST['short_description'] ?? '',
                 $_POST['destination'],
                 $_POST['duration_days'],
-                $_POST['max_guests'] ?? 50,
+                $_POST['max_guests'] ?? 20,
+                $_POST['max_guests_per_room'] ?? 2,
+                $_POST['child_free_age'] ?? 7,
                 $_POST['base_price'],
                 $_POST['child_price'],
                 $_POST['extra_room_price'] ?? 0,
+                // Tiered pricing
+                $_POST['price_tier_1_max'] ?? 2,
+                $_POST['price_tier_1_rate'] ?? 0,
+                $_POST['price_tier_2_max'] ?? 4,
+                $_POST['price_tier_2_rate'] ?? 0,
+                $_POST['price_tier_3_max'] ?? 6,
+                $_POST['price_tier_3_rate'] ?? 0,
+                $_POST['price_tier_4_max'] ?? 8,
+                $_POST['price_tier_4_rate'] ?? 0,
                 $_POST['inclusions'] ?? '',
                 $_POST['exclusions'] ?? '',
                 $_POST['terms_conditions'] ?? '',
@@ -600,12 +738,12 @@ class ProviderController {
             
             $this->db->commit();
             
-            set_flash_message('success', 'Package created successfully!');
+            set_flash_message('success', 'Package created successfully! Your package is now available for booking.');
             header('Location: ' . app_url('/provider/packages'));
             
         } catch (Exception $e) {
             $this->db->rollback();
-            set_flash_message('error', 'Failed to create package. Please try again.');
+            set_flash_message('error', 'Failed to create package: ' . $e->getMessage());
             header('Location: ' . app_url('/provider/packages/create'));
         }
     }
@@ -870,5 +1008,11 @@ class ProviderController {
         }
         
         header('Location: ' . app_url('/provider/earnings'));
+    }
+    
+    private function packageSlugExists($slug) {
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM packages WHERE slug = ?");
+        $stmt->execute([$slug]);
+        return $stmt->fetchColumn() > 0;
     }
 } 
