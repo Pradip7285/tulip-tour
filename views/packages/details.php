@@ -482,20 +482,11 @@ if (AppConfig::isDebug()) {
                         </div>
 
                         <!-- Book Now Button -->
-                        <form action="<?= app_url('/booking') ?>" method="POST" class="space-y-3">
-                            <input type="hidden" name="package_id" value="<?= $package['id'] ?>">
-                            <input type="hidden" name="adults" x-model="adults">
-                            <input type="hidden" name="children" x-model="children">
-                            <input type="hidden" name="extra_rooms" x-model="extraRooms">
-                            <input type="hidden" name="total_amount" x-model="totalAmount">
-                            <input type="hidden" name="applied_tier" x-model="currentTier ? currentTier.tier : ''">
-                            
-                            <button type="submit" 
-                                    class="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 transform hover:scale-105">
-                                <i class="fas fa-credit-card mr-2"></i>
-                                Book Now
-                            </button>
-                        </form>
+                        <a href="<?= app_url('/booking?package_id=' . $package['id']) ?>" 
+                           class="block w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 transform hover:scale-105 text-center">
+                            <i class="fas fa-credit-card mr-2"></i>
+                            Book Now
+                        </a>
 
                         <!-- Contact Provider -->
                         <button class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 rounded-lg transition duration-200">

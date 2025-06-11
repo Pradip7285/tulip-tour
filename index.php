@@ -45,7 +45,40 @@ switch ($path) {
         $controller = new PackageController();
         $controller->listing();
         break;
-    
+        
+    // Booking routes
+    case '/booking':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            requireLogin();
+            requireRole('customer');
+            require_once 'controllers/BookingController.php';
+            $controller = new BookingController();
+            $controller->create();
+        } else {
+            requireLogin();
+            requireRole('customer');
+            require_once 'controllers/BookingController.php';
+            $controller = new BookingController();
+            $controller->showForm();
+        }
+        break;
+        
+    case '/booking/confirmation':
+        requireLogin();
+        requireRole('customer');
+        require_once 'controllers/BookingController.php';
+        $controller = new BookingController();
+        $controller->confirmation();
+        break;
+        
+    case '/booking/payment':
+        requireLogin();
+        requireRole('customer');
+        require_once 'controllers/BookingController.php';
+        $controller = new BookingController();
+        $controller->payment();
+        break;
+        
     // Authentication routes
     case '/login':
         require_once 'controllers/AuthController.php';
