@@ -39,12 +39,13 @@ class AppConfig {
     // Application settings
     public static function get($key, $default = null) {
         $config = [
-            'app_name' => 'TripBazaar',
+            'app_name' => 'Tulip Tourisam',
             'app_description' => 'Your Gateway to Amazing Adventures',
             'app_version' => '1.0.0',
             'debug' => true, // Set to false in production
             'timezone' => 'UTC',
             'per_page' => 12,
+            'static'=> './assets/images/',
             'upload_max_size' => 5 * 1024 * 1024, // 5MB
             'allowed_image_types' => ['jpeg', 'jpg', 'png', 'gif', 'webp'],
         ];

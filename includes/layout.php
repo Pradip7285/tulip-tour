@@ -64,10 +64,10 @@
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
                     <a href="<?= app_url('/') ?>" class="flex-shrink-0 flex items-center">
-                        <div class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-plane text-white text-lg"></i>
+                        <div class="w-64  bg-transparent rounded-lg flex items-center justify-center">
+                            <img src=<?=AppConfig::get('static').'logo.png'?> alt="logo image">
                         </div>
-                        <span class="font-bold text-xl text-gray-900"><?= AppConfig::get('app_name') ?></span>
+                        <span class="hidden font-bold text-xl text-gray-900"><?= AppConfig::get('app_name') ?></span>
                     </a>
                 </div>
                 
@@ -183,10 +183,10 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div class="col-span-1 md:col-span-2">
                     <div class="flex items-center mb-4">
-                        <div class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-plane text-white text-lg"></i>
+                        <div class="w-64  bg-transparent rounded-lg flex items-center justify-center">
+                            <img src=<? AppConfig::get('static').'logo.png'?> alt="logo image">
                         </div>
-                        <span class="font-bold text-xl"><?= AppConfig::get('app_name') ?></span>
+                        <span class=" hidden font-bold text-xl"><?= AppConfig::get('app_name') ?></span>
                     </div>
                     <p class="text-gray-300 mb-4"><?= AppConfig::get('app_description') ?></p>
                     <div class="flex space-x-4">

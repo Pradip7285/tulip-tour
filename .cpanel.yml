@@ -1,0 +1,42 @@
+---
+deployment:
+  tasks:
+    # Deploy the entire codebase excluding development files
+    - export DEPLOYPATH=/home/username/public_html/tulip_tour
+    - /bin/cp -R controllers $DEPLOYPATH
+    - /bin/cp -R views $DEPLOYPATH
+    - /bin/cp -R includes $DEPLOYPATH
+    - /bin/cp -R config $DEPLOYPATH
+    - /bin/cp -R database $DEPLOYPATH
+    - /bin/cp -R assets $DEPLOYPATH
+    - /bin/cp -R uploads $DEPLOYPATH
+    - /bin/cp index.php $DEPLOYPATH
+    - /bin/cp .htaccess $DEPLOYPATH
+    
+    # Exclude development/test files from deployment
+    - /bin/find $DEPLOYPATH -name "test_*.php" -type f -delete
+    - /bin/find $DEPLOYPATH -name "debug_*.php" -type f -delete
+    - /bin/find $DEPLOYPATH -name "verify_*.php" -type f -delete
+    - /bin/find $DEPLOYPATH -name "fix_*.php" -type f -delete
+    - /bin/find $DEPLOYPATH -name "check_*.php" -type f -delete
+    
+    # Set proper permissions
+    - /bin/chmod 755 $DEPLOYPATH/uploads
+    - /bin/chmod 644 $DEPLOYPATH/.htaccess
+    
+    # Create logs directory if it doesn't exist
+    - /bin/mkdir -p $DEPLOYPATH/logs
+    - /bin/chmod 755 $DEPLOYPATH/logs
+    
+    # Backup database before deployment (optional)
+    # - /usr/local/cpanel/3rdparty/bin/mysqldump -u username -p'password' database_name > $DEPLOYPATH/database/backup_$(date +%Y%m%d).sql
+    
+    # Remove sensitive files
+    - /bin/rm -f $DEPLOYPATH/PRODUCTION_READINESS_CHECKLIST.md
+    - /bin/rm -f $DEPLOYPATH/README.md
+    - /bin/rm -f $DEPLOYPATH/STARTUP_GUIDE.md
+    - /bin/rm -f $DEPLOYPATH/PROJECT_STATUS.md
+    - /bin/rm -f $DEPLOYPATH/TESTING_REPORT.md
+    
+    # Add production-specific configurations
+    # - /bin/cp /home/username/env_configs/.env.production $DEPLOYPATH/.env 
