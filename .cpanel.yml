@@ -2,7 +2,7 @@
 deployment:
   tasks:
     # Deploy the entire codebase excluding development files
-    - export DEPLOYPATH=/home/username/public_html/tulip_tour
+    - export DEPLOYPATH=/home/username/public_html/tuliptour
     - /bin/cp -R controllers $DEPLOYPATH
     - /bin/cp -R views $DEPLOYPATH
     - /bin/cp -R includes $DEPLOYPATH
